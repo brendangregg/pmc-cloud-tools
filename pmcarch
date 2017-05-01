@@ -1,0 +1,58 @@
+#!/bin/bash
+#
+# pmcarch - measure and summarize architectural PMCs.
+#
+# PMCs are performance monitoring counters. This script uses the architectural
+# set to report on:
+#
+# - IPC: instructions-per-cycle
+# - BMR%: branch misprediction ration, as a percentage
+# - LLC%: last level cache hit ratio, as a percentage
+#
+# Copyright 2017 Netflix, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License")
+#
+# 07-Apr-2017	Brendan Gregg	Created this.
+
+secs=${1-1}			# default 1 second
+duration=${2-999999999}		# default semi-infinite seconds
+hlines=25			# lines to repeat header
+
+# order of PMCs attempts to workaround a 3.13 issue
+# note that instructions is last on purpose, it triggers output
+perf stat -e cycles \
+	-e r4f2e -e r412e \
+	-e r00c4 -e r00c5 -e instructions \
+	-a -I $(( secs * 1000 )) sleep $duration 2>&1 | awk -v hlines=$hlines '
+	BEGIN {
+		htxt = sprintf("%-13s %-13s %5s %-12s %-10s %5s %-11s %-10s %5s",
+		"CYCLES", "INSTRUCTIONS", "IPC", "BR_RETIRED", "BR_MISPRED", "BMR%",
+		"LLCREF", "LLCMISS", "LLC%");
+		print htxt
+		header = hlines
+	}
+	{ gsub(/,/, ""); }
+	$3 == "cycles" { cycles = $2; }
+	$3 == "r4f2e" { llcref = $2; }
+	$3 == "r412e" { llcmiss = $2; }
+	$3 == "r00c4" { brretired = $2; }
+	$3 == "r00c5" {
+		brmiss = $2
+		if (brretired > 0) {
+			brratio = (100 * brmiss) / brretired;
+		} else {
+			brratio = 0;
+		}
+	}
+	$3 == "instructions" {
+		if (--header == 0) {
+			print htxt
+			header = hlines
+		}
+		ins = $2
+		if (llcref == 0) { llcref = 1; llcmiss = 0 }
+
+		printf("%-13d %-13d %5.2f %-12d %-10d %5.2f %-11d %-10d %5.2f\n",
+			cycles, ins, ins / cycles, brretired, brmiss, brratio,
+			llcref, llcmiss, 100 * (llcref - llcmiss) / llcref) }
+'
