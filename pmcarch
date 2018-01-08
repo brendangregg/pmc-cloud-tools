@@ -25,8 +25,8 @@ perf stat -e cycles \
 	-e r00c4 -e r00c5 -e instructions \
 	-a -I $(( secs * 1000 )) sleep $duration 2>&1 | awk -v hlines=$hlines '
 	BEGIN {
-		htxt = sprintf("%-13s %-13s %5s %-12s %-10s %5s %-11s %-10s %5s",
-		"CYCLES", "INSTRUCTIONS", "IPC", "BR_RETIRED", "BR_MISPRED", "BMR%",
+		htxt = sprintf("%-10s %-10s %5s %-12s %-10s %5s %-11s %-10s %5s",
+		"K_CYCLES", "K_INSTR", "IPC", "BR_RETIRED", "BR_MISPRED", "BMR%",
 		"LLCREF", "LLCMISS", "LLC%");
 		print htxt
 		header = hlines
@@ -52,7 +52,7 @@ perf stat -e cycles \
 		ins = $2
 		if (llcref == 0) { llcref = 1; llcmiss = 0 }
 
-		printf("%-13d %-13d %5.2f %-12d %-10d %5.2f %-11d %-10d %5.2f\n",
-			cycles, ins, ins / cycles, brretired, brmiss, brratio,
-			llcref, llcmiss, 100 * (llcref - llcmiss) / llcref) }
+		printf("%-10d %-10d %5.2f %-12d %-10d %5.2f %-11d %-10d %5.2f\n",
+			cycles / 1000, ins / 1000, ins / cycles, brretired, brmiss,
+			brratio, llcref, llcmiss, 100 * (llcref - llcmiss) / llcref) }
 '
