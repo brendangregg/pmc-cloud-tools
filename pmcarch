@@ -54,5 +54,6 @@ perf stat -e cycles \
 
 		printf("%-10d %-10d %5.2f %-12d %-10d %5.2f %-11d %-10d %5.2f\n",
 			cycles / 1000, ins / 1000, ins / cycles, brretired, brmiss,
-			brratio, llcref, llcmiss, 100 * (llcref - llcmiss) / llcref) }
+			brratio, llcref, llcmiss, 100 * (llcref - llcmiss) / llcref)
+	}
 '
