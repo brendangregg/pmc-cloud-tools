@@ -7,7 +7,7 @@
 #
 # USAGE: tlbstat [interval [duration]]
 #
-# REQUIREMENTS: perf command, TLB PMC access.
+# REQUIREMENTS: perf command, TLB PMCs (counters listed below)
 #
 # Columns:
 #
