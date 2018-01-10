@@ -39,7 +39,7 @@ perf stat -e cycles \
 	-e dtlb_store_misses.walk_active \
 	-e itlb_misses.walk_active \
 	-e instructions \
-	-C 0 -I $(( secs * 1000 )) sleep $duration 2>&1 | awk -v hlines=$hlines '
+	-a -I $(( secs * 1000 )) sleep $duration 2>&1 | awk -v hlines=$hlines '
 	BEGIN {
 		htxt = sprintf("%-10s %-10s %5s %-10s %-10s %-10s %-10s %5s %5s",
 		"K_CYCLES", "K_INSTR", "IPC", "DTLB_WALKS", "ITLB_WALKS",
