@@ -1,0 +1,76 @@
+#!/bin/bash
+#
+# tlbstat - measure and summarize TLBs. Uses Linux perf and PMCs.
+#
+# TLB: Translation Lookaside Buffer (the MMU page translation cache)
+# PMC: Performance Monitoring Counters
+#
+# USAGE: tlbstat [interval [duration]]
+#
+# REQUIREMENTS: perf command, TLB PMC access.
+#
+# Columns:
+#
+# - K_CYCLES: CPU Cycles x 1000
+# - K_INSTR: CPU Instructions x 1000
+# - IPC: Instructions-Per-Cycle
+# - DTLB_WALKS: Data TLB walks (count)
+# - ITLB_WALKS: Instruction TLB walks (count)
+# - K_DTLBCYC: Cycles at least one PMH is active with data TLB walks x 1000
+# - K_ITLBCYC: Cycles at least one PMH is active with instr. TLB walks x 1000
+# - DTLB%: Data TLB active cycles as a ratio of total cycles
+# - ITLB%: Instruction TLB active cycles as a ratio of total cycles
+#
+# Copyright 2018 Netflix, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License")
+#
+# 08-Jan-2018	Brendan Gregg	Created this.
+
+secs=${1-1}			# default 1 second
+duration=${2-999999999}		# default semi-infinite seconds
+hlines=25			# lines to repeat header
+
+# note that instructions is last on purpose, it triggers output
+perf stat -e cycles \
+	-e dtlb_load_misses.miss_causes_a_walk \
+	-e dtlb_store_misses.miss_causes_a_walk \
+	-e itlb_misses.miss_causes_a_walk \
+	-e dtlb_load_misses.walk_active \
+	-e dtlb_store_misses.walk_active \
+	-e itlb_misses.walk_active \
+	-e instructions \
+	-C 0 -I $(( secs * 1000 )) sleep $duration 2>&1 | awk -v hlines=$hlines '
+	BEGIN {
+		htxt = sprintf("%-10s %-10s %5s %-10s %-10s %-10s %-10s %5s %5s",
+		"K_CYCLES", "K_INSTR", "IPC", "DTLB_WALKS", "ITLB_WALKS",
+		"K_DTLBCYC", "K_ITLBCYC", "DTLB%", "ITLB%");
+		print htxt
+		header = hlines
+	}
+	{ gsub(/,/, ""); }
+	$3 == "cycles" { cycles = $2; }
+	# counts:
+	$3 == "dtlb_load_misses.miss_causes_a_walk" { dtlbl = $2; }
+	$3 == "dtlb_store_misses.miss_causes_a_walk" { dtlbs = $2; }
+	$3 == "itlb_misses.miss_causes_a_walk" { itlb = $2; }
+	# walk active cycles in at least one PMH cycles:
+	$3 == "dtlb_load_misses.walk_active" { dtlblwc = $2; }
+	$3 == "dtlb_store_misses.walk_active" { dtlbswc = $2; }
+	$3 == "itlb_misses.walk_active" { itlbwc = $2; }
+	$3 == "instructions" {
+		if (--header == 0) {
+			print htxt
+			header = hlines
+		}
+		ins = $2
+		if (cycles == 0) { cycles = 1 }	 # and PMCs are broken
+
+		printf("%-10d %-10d %5.2f %-10d %-10d %-10d %-10d %5.2f %5.2f\n",
+			cycles / 1000, ins / 1000, ins / cycles,
+			dtlbl + dtlbs, itlb,
+			(dtlblwc + dtlbswc) / 1000, 
+			itlbwc / 1000, 
+			100 * (dtlblwc + dtlbswc) / cycles,
+			100 * (itlbwc) / cycles)
+	}
+'
