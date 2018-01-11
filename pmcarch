@@ -2,9 +2,13 @@
 #
 # pmcarch - measure and summarize architectural PMCs.
 #
+# USAGE: pmcarch {-C CPU | -p PID | -c CMD} [interval [duration]]
+#
 # PMCs are performance monitoring counters. This script uses the architectural
 # set to report on:
 #
+# - K_CYCLES: CPU Cycles x 1000
+# - K_INSTR: CPU Instructions x 1000
 # - IPC: instructions-per-cycle
 # - BMR%: branch misprediction ration, as a percentage
 # - LLC%: last level cache hit ratio, as a percentage
@@ -14,16 +18,62 @@
 #
 # 07-Apr-2017	Brendan Gregg	Created this.
 
+function usage {
+	cat <<-END >&2
+	USAGE: pmcarch {-C CPU | -p PID | -c CMD} [interval [duration]]
+	                 -C CPU         # measure this CPU only
+	                 -p PID         # measure this PID only
+	                 -c 'CMD'       # measure this command only (quote it)
+	                 interval       # output interval in secs (default 1)
+	                 duration       # total seconds (default infinityish)
+	  eg,
+	       pmcarch                  # show stats across all CPUs
+	       pmcarch 5                # show stats every 5 seconds
+	       pmcarch -C 0             # measure CPU 0 only
+	       pmcarch -p 181           # measure PID 181 only
+	       pmcarch -c 'cksum /boot/*'  # measure run and measure this cmd
+END
+	exit
+}
+
+opt_cpu=0; opt_pid=0; opt_cmd=0; cpu=""; pid=""; cmd=""
+
+while getopts C:p:c:h opt
+do
+	case $opt in
+	C)	opt_cpu=1; cpu=$OPTARG ;;
+	p)	opt_pid=1; pid=$OPTARG ;;
+	c)	opt_cmd=1; cmd=$OPTARG ;;
+	h|?)	usage ;;
+	esac
+done
+shift $(( $OPTIND - 1 ))
+
+if (( opt_cpu + opt_pid + opt_cmd > 1 )); then
+	echo >&2 "ERROR: pick one of -C, -p, -c"
+	usage
+fi
 secs=${1-1}			# default 1 second
 duration=${2-999999999}		# default semi-infinite seconds
 hlines=25			# lines to repeat header
+target=-a
+(( opt_cpu )) && target="-C $cpu sleep $duration"
+(( opt_pid )) && target="-p $pid sleep $duration"
+(( opt_cmd )) && target="$cmd"
+
+if (( opt_pid )); then
+	if [ ! -d /proc/$pid ]; then
+		echo >&2 "ERROR: Can't find PID $pid. Exiting."
+		exit
+	fi
+fi
 
 # order of PMCs attempts to workaround a 3.13 issue
 # note that instructions is last on purpose, it triggers output
-perf stat -e cycles \
+perf stat -e cycles -e cycles \
 	-e r4f2e -e r412e \
 	-e r00c4 -e r00c5 -e instructions \
-	-a -I $(( secs * 1000 )) sleep $duration 2>&1 | awk -v hlines=$hlines '
+	-I $(( secs * 1000 )) $target 2>&1 | awk -v hlines=$hlines '
 	BEGIN {
 		htxt = sprintf("%-10s %-10s %5s %-12s %-10s %5s %-11s %-10s %5s",
 		"K_CYCLES", "K_INSTR", "IPC", "BR_RETIRED", "BR_MISPRED", "BMR%",
@@ -51,6 +101,7 @@ perf stat -e cycles \
 		}
 		ins = $2
 		if (llcref == 0) { llcref = 1; llcmiss = 0 }
+		if (cycles == 0) { cycles = 1 }	 # PMCs are broken, or no events
 
 		printf("%-10d %-10d %5.2f %-12d %-10d %5.2f %-11d %-10d %5.2f\n",
 			cycles / 1000, ins / 1000, ins / cycles, brretired, brmiss,
