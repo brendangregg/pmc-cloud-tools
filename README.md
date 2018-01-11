@@ -11,7 +11,7 @@ These are seven PMCs that are enabled on some newer AWS EC2 types, eg, m4.16xl. 
 Summarizes the architectural PMCs. Eg:
 
 <pre>
-# ./pmcarch
+# <b>./pmcarch</b>
 K_CYCLES   K_INSTR      IPC BR_RETIRED   BR_MISPRED  BMR% LLCREF      LLCMISS     LLC%
 96163187   87166313    0.91 19730994925  679187299   3.44 656597454   174313799  73.45
 93988372   87205023    0.93 19669256586  724072315   3.68 666041693   169603955  74.54
@@ -19,6 +19,12 @@ K_CYCLES   K_INSTR      IPC BR_RETIRED   BR_MISPRED  BMR% LLCREF      LLCMISS   
 93739565   86349653    0.92 19339320671  634063527   3.28 642506778   181385553  71.77
 94495981   86815232    0.92 19482504710  648954409   3.33 628548666   180975066  71.21
 </pre>
+
+- K_CYCLES: CPU Cycles x 1000
+- K_INSTR: CPU Instructions x 1000
+- IPC: instructions-per-cycle
+- BMR%: branch misprediction ration, as a percentage
+- LLC%: last level cache hit ratio, as a percentage
 
 USAGE:
 
@@ -55,6 +61,16 @@ K_CYCLES   K_INSTR      IPC DTLB_WALKS ITLB_WALKS K_DTLBCYC  K_ITLBCYC  DTLB% IT
 92040379   86763153    0.94 133141376  44859310   3060742    1118921     3.33  1.22
 92152495   87144845    0.95 135446984  50308740   3156780    1200598     3.43  1.30
 </pre>
+
+- K_CYCLES: CPU Cycles x 1000
+- K_INSTR: CPU Instructions x 1000
+- IPC: Instructions-Per-Cycle
+- DTLB_WALKS: Data TLB walks (count)
+- ITLB_WALKS: Instruction TLB walks (count)
+- K_DTLBCYC: Cycles at least one PMH is active with data TLB walks x 1000
+- K_ITLBCYC: Cycles at least one PMH is active with instr. TLB walks x 1000
+- DTLB%: Data TLB active cycles as a ratio of total cycles
+- ITLB%: Instruction TLB active cycles as a ratio of total cycles
 
 USAGE:
 
