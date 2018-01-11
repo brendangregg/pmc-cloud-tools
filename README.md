@@ -2,6 +2,8 @@
 
 Linux tools for measuring PMCs (Performance Monitoring Counters) in the cloud.
 
+These are works-in-progress for analyzing some production issues, so the output may be adjusted as needed and more options added to these tools.
+
 ## Architectural PMCs
 
 These are seven PMCs that are enabled on some newer AWS EC2 types, eg, m4.16xl. See <a href="http://www.brendangregg.com/blog/2017-05-04/the-pmcs-of-ec2.html">The PMCs of EC2</a>.
