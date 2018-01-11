@@ -2,6 +2,8 @@
 #
 # pmcarch - measure and summarize architectural PMCs.
 #
+# FROM: https://github.com/brendangregg/pmc-cloud-tools
+#
 # USAGE: pmcarch {-C CPU | -p PID | -c CMD} [interval [duration]]
 #
 # PMCs are performance monitoring counters. This script uses the architectural
@@ -68,8 +70,9 @@ if (( opt_pid )); then
 	fi
 fi
 
-# order of PMCs attempts to workaround a 3.13 issue
 # note that instructions is last on purpose, it triggers output
+# order of PMCs attempts to workaround a 3.13 issue
+# cycles are twice as a workaround for an issue
 perf stat -e cycles -e cycles \
 	-e r4f2e -e r412e \
 	-e r00c4 -e r00c5 -e instructions \
@@ -81,6 +84,7 @@ perf stat -e cycles -e cycles \
 		print htxt
 		header = hlines
 	}
+	/invalid/ { print $0 }	# unsupported event
 	{ gsub(/,/, ""); }
 	$3 == "cycles" { cycles = $2; }
 	$3 == "r4f2e" { llcref = $2; }

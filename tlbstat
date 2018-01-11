@@ -2,12 +2,15 @@
 #
 # tlbstat - measure and summarize TLBs. Uses Linux perf and PMCs.
 #
+# FROM: https://github.com/brendangregg/pmc-cloud-tools
+#
 # TLB: Translation Lookaside Buffer (the MMU page translation cache)
 # PMC: Performance Monitoring Counters
 #
 # USAGE: tlbstat {-C CPU | -p PID | -c CMD} [interval [duration]]
 #
-# REQUIREMENTS: perf command, TLB PMCs (counters listed below)
+# REQUIREMENTS: perf command, TLB PMCs (counters listed below) which may
+# only be provided by Linux 4.14-ish and newer.
 #
 # Columns:
 #
@@ -77,6 +80,7 @@ if (( opt_pid )); then
 fi
 
 # note that instructions is last on purpose, it triggers output
+# cycles are twice as a workaround for an issue
 perf stat -e cycles -e cycles \
 	-e dtlb_load_misses.miss_causes_a_walk \
 	-e dtlb_store_misses.miss_causes_a_walk \
@@ -93,6 +97,7 @@ perf stat -e cycles -e cycles \
 		print htxt
 		header = hlines
 	}
+	/invalid/ { print $0 }	# unsupported event
 	{ gsub(/,/, ""); }
 	$3 == "cycles" { cycles = $2; }
 	# counts:
