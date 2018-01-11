@@ -22,9 +22,9 @@ K_CYCLES   K_INSTR      IPC BR_RETIRED   BR_MISPRED  BMR% LLCREF      LLCMISS   
 
 - K_CYCLES: CPU Cycles x 1000
 - K_INSTR: CPU Instructions x 1000
-- IPC: instructions-per-cycle
-- BMR%: branch misprediction ration, as a percentage
-- LLC%: last level cache hit ratio, as a percentage
+- IPC: Instructions-Per-Cycle
+- BMR%: Branch Misprediction Ratio, as a percentage
+- LLC%: Last Level Cache hit ratio, as a percentage
 
 USAGE:
 
