@@ -29,7 +29,7 @@ K_CYCLES   K_INSTR      IPC BR_RETIRED   BR_MISPRED  BMR% LLCREF      LLCMISS   
 USAGE:
 
 <pre>
-# ./pmcarch -h
+# <b>./pmcarch -h</b>
 USAGE: pmcarch {-C CPU | -p PID | -c CMD} [interval [duration]]
                  -C CPU         # measure this CPU only
                  -p PID         # measure this PID only
@@ -53,7 +53,7 @@ These are available on some AWS Nitro hypervisor instance types. Eg, c5.9xl.
 Summarizes TLB (Translation Lookaside Buffer) statistics (an MMU cache). Eg:
 
 <pre>
-# ./tlbstat
+# <b>./tlbstat</b>
 K_CYCLES   K_INSTR      IPC DTLB_WALKS ITLB_WALKS K_DTLBCYC  K_ITLBCYC  DTLB% ITLB%
 93091508   86971957    0.93 135562325  45028565   3053416    1121015     3.28  1.20
 94354781   88708445    0.94 136898873  49736338   3135383    1199061     3.32  1.27
@@ -75,7 +75,7 @@ K_CYCLES   K_INSTR      IPC DTLB_WALKS ITLB_WALKS K_DTLBCYC  K_ITLBCYC  DTLB% IT
 USAGE:
 
 <pre>
-# ./tlbstat -h
+# <b>./tlbstat -h</b>
 USAGE: tlbstat {-C CPU | -p PID | -c CMD} [interval [duration]]
                  -C CPU         # measure this CPU only
                  -p PID         # measure this PID only
