@@ -22,11 +22,11 @@ K_CYCLES   K_INSTR      IPC BR_RETIRED   BR_MISPRED  BMR% LLCREF      LLCMISS   
 94495981   86815232    0.92 19482504710  648954409   3.33 628548666   180975066  71.21
 </pre>
 
-- K_CYCLES: CPU Cycles x 1000
-- K_INSTR: CPU Instructions x 1000
-- IPC: Instructions-Per-Cycle
-- BMR%: Branch Misprediction Ratio, as a percentage
-- LLC%: Last Level Cache hit ratio, as a percentage
+- `K_CYCLES`: CPU Cycles x 1000
+- `K_INSTR`: CPU Instructions x 1000
+- `IPC`: Instructions-Per-Cycle
+- `BMR%`: Branch Misprediction Ratio, as a percentage
+- `LLC%`: Last Level Cache hit ratio, as a percentage
 
 USAGE:
 
@@ -64,15 +64,15 @@ K_CYCLES   K_INSTR      IPC DTLB_WALKS ITLB_WALKS K_DTLBCYC  K_ITLBCYC  DTLB% IT
 92152495   87144845    0.95 135446984  50308740   3156780    1200598     3.43  1.30
 </pre>
 
-- K_CYCLES: CPU Cycles x 1000
-- K_INSTR: CPU Instructions x 1000
-- IPC: Instructions-Per-Cycle
-- DTLB_WALKS: Data TLB walks (count)
-- ITLB_WALKS: Instruction TLB walks (count)
-- K_DTLBCYC: Cycles at least one PMH is active with data TLB walks x 1000
-- K_ITLBCYC: Cycles at least one PMH is active with instr. TLB walks x 1000
-- DTLB%: Data TLB active cycles as a ratio of total cycles
-- ITLB%: Instruction TLB active cycles as a ratio of total cycles
+- `K_CYCLES`: CPU Cycles x 1000
+- `K_INSTR`: CPU Instructions x 1000
+- `IPC`: Instructions-Per-Cycle
+- `DTLB_WALKS`: Data TLB walks (count)
+- `ITLB_WALKS`: Instruction TLB walks (count)
+- `K_DTLBCYC`: Cycles at least one PMH is active with data TLB walks x 1000
+- `K_ITLBCYC`: Cycles at least one PMH is active with instr. TLB walks x 1000
+- `DTLB%`: Data TLB active cycles as a ratio of total cycles
+- `ITLB%`: Instruction TLB active cycles as a ratio of total cycles
 
 USAGE:
 
