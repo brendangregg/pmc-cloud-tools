@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# pmcarch - measure and summarize architectural PMCs.
+# pmcarch - measure and summarize architectural PMCs. Uses Linux perf.
 #
 # FROM: https://github.com/brendangregg/pmc-cloud-tools
 #
@@ -55,8 +55,8 @@ if (( opt_cpu + opt_pid + opt_cmd > 1 )); then
 	echo >&2 "ERROR: pick one of -C, -p, -c"
 	usage
 fi
-secs=${1-1}			# default 1 second
-duration=${2-999999999}		# default semi-infinite seconds
+secs=${1:-1}			# default 1 second
+duration=${2:-999999999}	# default semi-infinite seconds
 hlines=25			# lines to repeat header
 target=-a
 (( opt_cpu )) && target="-C $cpu sleep $duration"
@@ -73,6 +73,7 @@ fi
 # note that instructions is last on purpose, it triggers output
 # order of PMCs attempts to workaround a 3.13 issue
 # cycles are twice as a workaround for an issue
+# the raw counters are from the architectural set, so should be stable
 perf stat -e cycles -e cycles \
 	-e r4f2e -e r412e \
 	-e r00c4 -e r00c5 -e instructions \
