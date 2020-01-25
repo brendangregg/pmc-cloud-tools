@@ -1,0 +1,113 @@
+#!/bin/bash
+#
+# resstalls - measure and summarize resource stalls.
+#            Uses Linux perf and PMCs.
+#
+# FROM: https://github.com/brendangregg/pmc-cloud-tools
+#
+# USAGE: resstalls {-C CPU | -p PID | -c CMD} [interval [duration]]
+#
+# Columns:
+#
+# - ALL: Resource stalls x 1M
+# - LOAD: Load buffer stalls x 1M
+# - PIPE: Instruction pipeline reservation station full stalls x 1M
+# - STORE: Store related stall x 1M
+# - ROB: Re-order buffer full store x 1M
+# - FLOAT: Floating point unit control word stall x 1M
+# - MXCSR: MXCSR register rename stall x 1M
+# - OTHER: Other stall reasons x 1M
+# - SUM: Sum of all columns except ALL
+#
+# Copyright 2020 Netflix, Inc.
+# Licensed under the Apache License, Version 2.0 (the "License")
+#
+# 24-Jan-2020	Brendan Gregg	Created this.
+
+function usage {
+	cat <<-END >&2
+	USAGE: resstalls {-C CPU | -p PID | -c CMD} [interval [duration]]
+	                 -C CPU         # measure this CPU only
+	                 -p PID         # measure this PID only
+	                 -c 'CMD'       # measure this command only (quote it)
+	                 interval       # output interval in secs (default 1)
+	                 duration       # total seconds (default infinityish)
+	  eg,
+	       resstalls                 # show stats across all CPUs
+	       resstalls 5               # show stats every 5 seconds
+	       resstalls -C 0            # measure CPU 0 only
+	       resstalls -p 181          # measure PID 181 only
+	       resstalls -c 'cksum /boot/*' # measure run and measure this cmd
+END
+	exit
+}
+
+opt_cpu=0; opt_pid=0; opt_cmd=0; cpu=""; pid=""; cmd=""
+
+while getopts C:p:c:h opt
+do
+	case $opt in
+	C)	opt_cpu=1; cpu=$OPTARG ;;
+	p)	opt_pid=1; pid=$OPTARG ;;
+	c)	opt_cmd=1; cmd=$OPTARG ;;
+	h|?)	usage ;;
+	esac
+done
+shift $(( $OPTIND - 1 ))
+
+if (( opt_cpu + opt_pid + opt_cmd > 1 )); then
+	echo >&2 "ERROR: pick one of -C, -p, -c"
+	usage
+fi
+secs=${1:-1}			# default 1 second
+duration=${2:-999999999}	# default semi-infinite seconds
+hlines=25			# lines to repeat header
+target=-a
+(( opt_cpu )) && target="-C $cpu sleep $duration"
+(( opt_pid )) && target="-p $pid sleep $duration"
+(( opt_cmd )) && target="$cmd"
+
+if (( opt_pid )); then
+	if [ ! -d /proc/$pid ]; then
+		echo >&2 "ERROR: Can't find PID $pid. Exiting."
+		exit
+	fi
+fi
+
+# note that instructions is last on purpose, it triggers output
+# cycles are twice as a workaround for an issue
+# the r4f2e and r412e counters are from the architectural set, so should be stable
+echo "All counter columns are x 1000000"
+perf stat -e resource_stalls.any,r02a2,r04a2,r08a2,r10a2,r20a2,r40a2,r80a2 \
+	-I $(( secs * 1000 )) $target 2>&1 | awk -v hlines=$hlines '
+	BEGIN {
+		htxt = sprintf("%8s %8s %8s %8s %8s %8s %8s %8s %8s",
+			"ALL", "LOAD", "PIPE", "STORE", "ROB", "FLOAT",
+			"MXCSR", "OTHER", "SUM");
+		print htxt
+		header = hlines
+	}
+	/invalid/ { print $0 }	# unsupported event
+	{ gsub(/,/, ""); }
+	$3 == "resource_stalls.any" { rsany = $2 }	# RESOURCE_STALLS.ANY
+	$3 == "r02a2" { rsload = $2 }			# RESOURCE_STALLS.LOAD
+	$3 == "r04a2" { rspipe = $2 }			# RESOURCE_STALLS.RS_FULL
+	$3 == "r08a2" { rsstore = $2 }			# RESOURCE_STALLS.STORE
+	$3 == "r10a2" { rsrob = $2 }			# RESOURCE_STALLS.ROB_FULL
+	$3 == "r20a2" { rsfpcw = $2 }			# RESOURCE_STALLS.FPCW
+	$3 == "r40a2" { rsmxcsr = $2 }			# RESOURCE_STALLS.MXCSR
+	$3 == "r80a2" {				# last one, trigger output
+		rsother = $2				# RESOURCE_STALLS.OTHER
+		if (--header == 0) {
+			print htxt
+			header = hlines
+		}
+
+		rssum = rsload + rspipe + rsstore + rsrob + rsfpcw + rsmxcsr + rsother
+
+		printf("%8.1f %8.1f %8.1f %8.1f %8.1f %8.1f %8.1f %8.1f %8.1f\n",
+			rsany / 1000000, rsload / 1000000, rspipe / 1000000,
+			rsstore / 1000000, rsrob / 1000000, rsfpcw / 1000000,
+			rsmxcsr / 1000000, rsother / 1000000, rssum / 1000000)
+	}
+'
