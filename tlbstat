@@ -47,6 +47,19 @@ END
 	exit
 }
 
+function check_available_pmcs {
+	# Check for Skylake
+	if ( perf list | grep -q dtlb_load_misses.walk_active ) ; then
+		WALK_ACTIVE=walk_active
+	# Pre-Skylake SKUs
+	elif ( perf list | grep -q dtlb_load_misses.walk_duration ) ; then
+		WALK_ACTIVE=walk_duration
+	else
+		echo "FAIL: dtlb_load_misses.{walk_active,walk_duration} PMCs are missing"
+		exit 1
+	fi
+}
+
 opt_cpu=0; opt_pid=0; opt_cmd=0; cpu=""; pid=""; cmd=""
 
 while getopts C:p:c:h opt
@@ -79,15 +92,17 @@ if (( opt_pid )); then
 	fi
 fi
 
+check_available_pmcs
+
 # note that instructions is last on purpose, it triggers output
 # cycles are twice as a workaround for an issue
 perf stat -e cycles -e cycles \
 	-e dtlb_load_misses.miss_causes_a_walk \
 	-e dtlb_store_misses.miss_causes_a_walk \
 	-e itlb_misses.miss_causes_a_walk \
-	-e dtlb_load_misses.walk_active \
-	-e dtlb_store_misses.walk_active \
-	-e itlb_misses.walk_active \
+	-e dtlb_load_misses.${WALK_ACTIVE}\
+	-e dtlb_store_misses.${WALK_ACTIVE} \
+	-e itlb_misses.${WALK_ACTIVE} \
 	-e instructions \
 	-I $(( secs * 1000 )) $target 2>&1 | awk -v hlines=$hlines '
 	BEGIN {
@@ -105,9 +120,9 @@ perf stat -e cycles -e cycles \
 	$3 == "dtlb_store_misses.miss_causes_a_walk" { dtlbs = $2; }
 	$3 == "itlb_misses.miss_causes_a_walk" { itlb = $2; }
 	# walk active cycles in at least one PMH cycles:
-	$3 == "dtlb_load_misses.walk_active" { dtlblwc = $2; }
-	$3 == "dtlb_store_misses.walk_active" { dtlbswc = $2; }
-	$3 == "itlb_misses.walk_active" { itlbwc = $2; }
+	$3 == "dtlb_load_misses.'${WALK_ACTIVE}'"  { dtlblwc = $2; }
+	$3 == "dtlb_store_misses.'${WALK_ACTIVE}'" { dtlbswc = $2; }
+	$3 == "itlb_misses.'${WALK_ACTIVE}'" { itlbwc = $2; }
 	$3 == "instructions" {
 		if (--header == 0) {
 			print htxt
