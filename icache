@@ -79,7 +79,7 @@ fi
 # the r4f2e and r412e counters are from the architectural set, so should be stable
 echo "All counter columns are x 1000"
 perf stat -e instructions,L1-icache-load-misses,r2424,r4424,cache-references,cache-misses \
-	-I $(( secs * 1000 )) $target 2>&1 | awk -v hlines=$hlines '
+	-I $(( secs * 1000 )) $target | awk -v hlines=$hlines '
 	BEGIN {
 		htxt = sprintf("%-10s %10s %5s %9s %9s %5s %8s %8s %5s",
 			"INS", "L1IMISS", "L1I%", "L2IHIT", "L2IMISS", "L2I%",

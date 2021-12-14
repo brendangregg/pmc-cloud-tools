@@ -79,7 +79,7 @@ fi
 # the r4f2e and r412e counters are from the architectural set, so should be stable
 echo "All counter columns are x 1000000"
 perf stat -e resource_stalls.any,r02a2,r04a2,r08a2,r10a2,r20a2,r40a2,r80a2 \
-	-I $(( secs * 1000 )) $target 2>&1 | awk -v hlines=$hlines '
+	-I $(( secs * 1000 )) $target | awk -v hlines=$hlines '
 	BEGIN {
 		htxt = sprintf("%8s %8s %8s %8s %8s %8s %8s %8s %8s",
 			"ALL", "LOAD", "PIPE", "STORE", "ROB", "FLOAT",

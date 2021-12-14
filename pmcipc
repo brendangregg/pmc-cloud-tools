@@ -77,7 +77,7 @@ fi
 # only three (<=4) PMCs are used to workaround another issue.
 # the raw counters are from the architectural set, so should be stable.
 perf stat -e cycles -e cycles -e instructions \
-	-I $(( secs * 1000 )) $target 2>&1 | awk -v hlines=$hlines '
+	-I $(( secs * 1000 )) $target | awk -v hlines=$hlines '
 	BEGIN {
 		htxt = sprintf("%-10s %-10s %5s", "K_CYCLES", "K_INSTR", "IPC");
 		print htxt
