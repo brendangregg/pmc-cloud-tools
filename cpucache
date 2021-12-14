@@ -85,7 +85,7 @@ perf stat -e cycles -e cycles \
 	-e L1-dcache-loads -e L1-dcache-load-misses \
 	-e l2_rqsts.references -e l2_rqsts.miss \
 	-e r4f2e -e r412e -e instructions \
-	-I $(( secs * 1000 )) $target 2>&1 | awk -v hlines=$hlines '
+	-I $(( secs * 1000 )) $target | awk -v hlines=$hlines '
 	BEGIN {
 		htxt = sprintf("%-10s %-10s %5s %-9s %-9s %5s %-8s %-8s %5s %-8s %-8s %5s",
 		"CYCLES", "INSTR", "IPC", "L1DREF", "L1DMISS", "L1D%",

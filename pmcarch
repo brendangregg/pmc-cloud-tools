@@ -77,7 +77,7 @@ fi
 perf stat -e cycles -e cycles \
 	-e r4f2e -e r412e \
 	-e r00c4 -e r00c5 -e instructions \
-	-I $(( secs * 1000 )) $target 2>&1 | awk -v hlines=$hlines '
+	-I $(( secs * 1000 )) $target | awk -v hlines=$hlines '
 	BEGIN {
 		htxt = sprintf("%-10s %-10s %5s %-12s %-10s %5s %-11s %-10s %5s",
 		"K_CYCLES", "K_INSTR", "IPC", "BR_RETIRED", "BR_MISPRED", "BMR%",
